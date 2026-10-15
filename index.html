@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Эволюция методов шифрования: от Цезаря до AES</title>
+    <title>KRYP — Эволюция методов шифрования: от Цезаря до AES</title>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <!-- Подключение библиотеки CryptoJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
@@ -63,14 +63,27 @@
             gap: 1rem;
         }
 
+        /* Интерактивный логотип KRYP */
         .logo {
             font-family: 'Fira Code', monospace;
             font-weight: 700;
-            font-size: 1.25rem;
+            font-size: 1.4rem;
             color: var(--primary);
             display: flex;
             align-items: center;
             gap: 10px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 8px rgba(210, 168, 255, 0.6));
+        }
+
+        .logo:active {
+            transform: scale(0.97);
         }
 
         .logo span {
@@ -291,8 +304,9 @@
     <canvas id="bg-canvas"></canvas>
 
     <header>
-        <div class="logo">
-            CRYPTO<span>.EDU</span>
+        <!-- Интерактивное название KRYP с переходoм в Лабораторию -->
+        <div class="logo" onclick="openTab('lab')">
+            KRYP<span>.EDU</span>
         </div>
         <nav>
             <button type="button" class="tab-btn active" data-tab="intro" onclick="openTab('intro', event)">Введение</button>
@@ -520,7 +534,7 @@ P_i = (C_i - K_(i mod m) + n) mod n
     </div>
 
     <footer>
-        <p>© CRYPTO.EDU — Учебно-исследовательский проект по криптографии.</p>
+        <p>© KRYP — Учебно-исследовательский проект по криптографии.</p>
     </footer>
 
     <script>
@@ -713,7 +727,7 @@ P_i = (C_i - K_(i mod m) + n) mod n
                 });
             });
 
-            /* Анимация точек с привязкой линий к курсору мыши (Constellation) */
+            /* Анимация созвездия точек */
             const canvas = document.getElementById('bg-canvas');
             if (canvas && canvas.getContext) {
                 const ctx = canvas.getContext('2d');
