@@ -10,15 +10,15 @@
     
     <style>
         :root {
-            --bg-color: #061209;
-            --card-bg: rgba(12, 28, 17, 0.88);
-            --card-border: rgba(46, 160, 67, 0.35);
-            --primary: #3fb950;
-            --accent: #00ff66;
-            --neon-purple: #2ea043;
-            --text-main: #c9e6d0;
-            --text-heading: #f0fdf4;
-            --code-bg: #0b1f11;
+            --bg-color: #0d0714;
+            --card-bg: rgba(26, 15, 41, 0.88);
+            --card-border: rgba(163, 113, 247, 0.35);
+            --primary: #bc8cff;
+            --accent: #d2a8ff;
+            --neon-purple: #a371f7;
+            --text-main: #e6daf5;
+            --text-heading: #f8f0ff;
+            --code-bg: #160c24;
         }
 
         * {
@@ -49,7 +49,7 @@
 
         /* Header Navigation */
         header {
-            background: rgba(6, 18, 9, 0.92);
+            background: rgba(13, 7, 20, 0.92);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--card-border);
             position: sticky;
@@ -102,15 +102,15 @@
 
         .tab-btn:hover {
             color: var(--accent);
-            border-color: rgba(0, 255, 102, 0.4);
-            background: rgba(0, 255, 102, 0.1);
+            border-color: rgba(210, 168, 255, 0.4);
+            background: rgba(163, 113, 247, 0.15);
         }
 
         .tab-btn.active {
-            background: rgba(46, 160, 67, 0.25);
+            background: rgba(163, 113, 247, 0.25);
             color: var(--accent);
             border-color: var(--accent);
-            box-shadow: 0 0 12px rgba(0, 255, 102, 0.3);
+            box-shadow: 0 0 12px rgba(163, 113, 247, 0.35);
         }
 
         .tab-btn:active {
@@ -119,8 +119,8 @@
 
         /* Action Buttons */
         .btn-action {
-            background: linear-gradient(135deg, var(--neon-purple), var(--accent));
-            color: #040d06;
+            background: linear-gradient(135deg, var(--neon-purple), var(--primary));
+            color: #0d0714;
             border: none;
             padding: 0.8rem 1.5rem;
             border-radius: 6px;
@@ -128,14 +128,14 @@
             cursor: pointer !important;
             width: 100%;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(0, 255, 102, 0.2);
+            box-shadow: 0 4px 12px rgba(163, 113, 247, 0.25);
             pointer-events: auto !important;
         }
 
         .btn-action:hover {
             opacity: 0.95;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 255, 102, 0.35);
+            box-shadow: 0 6px 20px rgba(163, 113, 247, 0.4);
         }
 
         .btn-action:active {
@@ -194,7 +194,7 @@
             border-radius: 0 8px 8px 0;
             font-family: 'Fira Code', monospace;
             font-size: 0.95rem;
-            color: #7ee787;
+            color: #d2a8ff;
             margin: 1rem 0;
             overflow-x: auto;
             white-space: pre-wrap;
@@ -208,7 +208,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            background: rgba(11, 31, 17, 0.5);
+            background: rgba(22, 12, 36, 0.5);
             border-radius: 8px;
             overflow: hidden;
         }
@@ -216,17 +216,17 @@
         th, td {
             padding: 0.85rem 1rem;
             text-align: left;
-            border-bottom: 1px solid rgba(0, 255, 102, 0.1);
+            border-bottom: 1px solid rgba(163, 113, 247, 0.15);
         }
 
         th {
-            background-color: rgba(46, 160, 67, 0.25);
+            background-color: rgba(163, 113, 247, 0.25);
             color: var(--accent);
             font-weight: 600;
         }
 
         tr:hover {
-            background-color: rgba(0, 255, 102, 0.05);
+            background-color: rgba(163, 113, 247, 0.08);
         }
 
         ul, ol {
@@ -272,17 +272,17 @@
 
         input:focus, textarea:focus, select:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 8px rgba(0, 255, 102, 0.3);
+            box-shadow: 0 0 8px rgba(163, 113, 247, 0.35);
         }
 
         footer {
             text-align: center;
             padding: 2rem;
-            color: #7ee787;
+            color: #bc8cff;
             font-size: 0.85rem;
             border-top: 1px solid var(--card-border);
             margin-top: 3rem;
-            background: rgba(6, 18, 9, 0.95);
+            background: rgba(13, 7, 20, 0.95);
         }
     </style>
 </head>
@@ -713,42 +713,112 @@ P_i = (C_i - K_(i mod m) + n) mod n
                 });
             });
 
+            /* Анимация точек с привязкой линий к курсору мыши (Constellation) */
             const canvas = document.getElementById('bg-canvas');
             if (canvas && canvas.getContext) {
                 const ctx = canvas.getContext('2d');
-                
+
+                let width, height;
+                let particles = [];
+                let mouse = { x: null, y: null, radius: 180 };
+
                 function resizeCanvas() {
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
+                    width = canvas.width = window.innerWidth;
+                    height = canvas.height = window.innerHeight;
+                    initParticles();
                 }
-                resizeCanvas();
+
                 window.addEventListener('resize', resizeCanvas);
+                window.addEventListener('mousemove', (e) => {
+                    mouse.x = e.clientX;
+                    mouse.y = e.clientY;
+                });
 
-                const chars = '0123456789ABCDEF';
-                const fontSize = 14;
-                let columns = Math.floor(canvas.width / fontSize);
-                let drops = new Array(columns).fill(1);
+                window.addEventListener('mouseleave', () => {
+                    mouse.x = null;
+                    mouse.y = null;
+                });
 
-                function drawMatrix() {
-                    ctx.fillStyle = 'rgba(6, 18, 9, 0.08)';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                class Particle {
+                    constructor() {
+                        this.x = Math.random() * width;
+                        this.y = Math.random() * height;
+                        this.vx = (Math.random() - 0.5) * 0.8;
+                        this.vy = (Math.random() - 0.5) * 0.8;
+                        this.radius = Math.random() * 2 + 1;
+                    }
 
-                    ctx.fillStyle = '#00ff66';
-                    ctx.font = fontSize + 'px monospace';
+                    update() {
+                        this.x += this.vx;
+                        this.y += this.vy;
 
-                    for (let i = 0; i < drops.length; i++) {
-                        const text = chars.charAt(Math.floor(Math.random() * chars.length));
-                        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                        if (this.x < 0 || this.x > width) this.vx *= -1;
+                        if (this.y < 0 || this.y > height) this.vy *= -1;
+                    }
 
-                        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                            drops[i] = 0;
-                        }
-                        drops[i]++;
+                    draw() {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                        ctx.fillStyle = '#bc8cff';
+                        ctx.fill();
                     }
                 }
-                setInterval(drawMatrix, 33);
+
+                function initParticles() {
+                    particles = [];
+                    const count = Math.floor((width * height) / 11000);
+                    for (let i = 0; i < count; i++) {
+                        particles.push(new Particle());
+                    }
+                }
+
+                function animateConstellation() {
+                    ctx.clearRect(0, 0, width, height);
+
+                    for (let i = 0; i < particles.length; i++) {
+                        particles[i].update();
+                        particles[i].draw();
+
+                        for (let j = i + 1; j < particles.length; j++) {
+                            const dx = particles[i].x - particles[j].x;
+                            const dy = particles[i].y - particles[j].y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+
+                            if (dist < 110) {
+                                ctx.beginPath();
+                                ctx.moveTo(particles[i].x, particles[i].y);
+                                ctx.lineTo(particles[j].x, particles[j].y);
+                                ctx.strokeStyle = `rgba(188, 140, 255, ${0.15 * (1 - dist / 110)})`;
+                                ctx.lineWidth = 0.6;
+                                ctx.stroke();
+                            }
+                        }
+
+                        if (mouse.x !== null && mouse.y !== null) {
+                            const dx = particles[i].x - mouse.x;
+                            const dy = particles[i].y - mouse.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+
+                            if (dist < mouse.radius) {
+                                ctx.beginPath();
+                                ctx.moveTo(particles[i].x, particles[i].y);
+                                ctx.lineTo(mouse.x, mouse.y);
+                                ctx.strokeStyle = `rgba(210, 168, 255, ${0.8 * (1 - dist / mouse.radius)})`;
+                                ctx.lineWidth = 1.2;
+                                ctx.stroke();
+                            }
+                        }
+                    }
+
+                    requestAnimationFrame(animateConstellation);
+                }
+
+                resizeCanvas();
+                animateConstellation();
             }
         });
     </script>
+</body>
+</html>
 </body>
 </html>
