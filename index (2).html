@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эволюция методов шифрования: от Цезаря до AES</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Подключение библиотеки CryptoJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #061209;
+            --card-bg: rgba(12, 28, 17, 0.88);
+            --card-border: rgba(46, 160, 67, 0.35);
+            --primary: #3fb950;
+            --accent: #00ff66;
+            --neon-purple: #2ea043;
+            --text-main: #c9e6d0;
+            --text-heading: #f0fdf4;
+            --code-bg: #0b1f11;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Canvas Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -10 !important;
+            pointer-events: none !important;
+        }
+
+        /* Header Navigation */
+        header {
+            background: rgba(6, 18, 9, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-family: 'Fira Code', monospace;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Tab Buttons */
+        .tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer !important;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            user-select: none;
+            pointer-events: auto !important;
+            z-index: 1001;
+        }
+
+        .tab-btn:hover {
+            color: var(--accent);
+            border-color: rgba(0, 255, 102, 0.4);
+            background: rgba(0, 255, 102, 0.1);
+        }
+
+        .tab-btn.active {
+            background: rgba(46, 160, 67, 0.25);
+            color: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(0, 255, 102, 0.3);
+        }
+
+        .tab-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            background: linear-gradient(135deg, var(--neon-purple), var(--accent));
+            color: #040d06;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer !important;
+            width: 100%;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 255, 102, 0.2);
+            pointer-events: auto !important;
+        }
+
+        .btn-action:hover {
+            opacity: 0.95;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 102, 0.35);
+        }
+
+        .btn-action:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        /* Main Container & Tabs */
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+
+        .tab-content.active {
+            display: block !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--text-heading);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        h1 { font-size: 2.2rem; margin-bottom: 0.5rem; color: var(--accent); }
+        h2 { font-size: 1.5rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem; margin-top: 1.5rem; color: var(--primary); }
+        h3 { font-size: 1.2rem; color: var(--accent); margin-top: 1.2rem; }
+
+        p { margin-bottom: 1rem; }
+
+        .formula-box, pre {
+            background-color: var(--code-bg);
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            color: #7ee787;
+            margin: 1rem 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(11, 31, 17, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 0.85rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 255, 102, 0.1);
+        }
+
+        th {
+            background-color: rgba(46, 160, 67, 0.25);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: rgba(0, 255, 102, 0.05);
+        }
+
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li { margin-bottom: 0.4rem; }
+
+        .lab-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .lab-grid { grid-template-columns: 1fr; }
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-heading);
+        }
+
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--code-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Fira Code', monospace;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(0, 255, 102, 0.3);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #7ee787;
+            font-size: 0.85rem;
+            border-top: 1px solid var(--card-border);
+            margin-top: 3rem;
+            background: rgba(6, 18, 9, 0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <header>
+        <div class="logo">
+            CRYPTO<span>.EDU</span>
+        </div>
+        <nav>
+            <button type="button" class="tab-btn active" data-tab="intro" onclick="openTab('intro', event)">Введение</button>
+            <button type="button" class="tab-btn" data-tab="caesar" onclick="openTab('caesar', event)">Цезарь</button>
+            <button type="button" class="tab-btn" data-tab="vigenere" onclick="openTab('vigenere', event)">Виженер</button>
+            <button type="button" class="tab-btn" data-tab="enigma" onclick="openTab('enigma', event)">Энигма</button>
+            <button type="button" class="tab-btn" data-tab="aes" onclick="openTab('aes', event)">AES</button>
+            <button type="button" class="tab-btn" data-tab="compare" onclick="openTab('compare', event)">Сравнение & Аналоги</button>
+            <button type="button" class="tab-btn" data-tab="lab" onclick="openTab('lab', event)" style="border-color: var(--accent); color: var(--accent);">Лаборатория</button>
+        </nav>
+    </header>
+
+    <div class="main-container">
+
+        <!-- TAB 1: INTRO -->
+        <div id="intro" class="tab-content active">
+            <div class="card">
+                <h1>Эволюция методов шифрования: от Цезаря до AES</h1>
+                <p>Учебно-исследовательский проект по криптографии.</p>
+                
+                <h2>Задачи проекта</h2>
+                <ul>
+                    <li><strong>Исторический контекст:</strong> от симметричной подстановки до асимметричных шифров.</li>
+                    <li><strong>Математическая модель:</strong> модульная арифметика, полиалфавитные сдвиги и операции над полями Галуа.</li>
+                    <li><strong>Криптоанализ:</strong> частотный анализ, поиск повторов и методы полного перебора (Brute-Force).</li>
+                    <li><strong>Лаборатория:</strong> шифрование и дешифрование данных в реальном времени.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- TAB 2: CAESAR -->
+        <div id="caesar" class="tab-content">
+            <div class="card">
+                <h1>Шифр Цезаря (Caesar Cipher)</h1>
+                <p>Моноалфавитный шифр замены со сдвигом символов на фиксированное число позиций.</p>
+
+                <h2>Математическая модель</h2>
+                <div class="formula-box">
+E_k(x) = (x + k) mod n  (Шифрование)
+D_k(x) = (x - k + n) mod n  (Дешифрование)
+
+Где:
+• x — индекс символа
+• k — ключ (сдвиг)
+• n — размер алфавита (26 для EN, 33 для RU)
+                </div>
+
+                <h2>Уязвимости</h2>
+                <p>Сохраняет частотные характеристики языка. Взламывается частотным анализом или методом Brute-Force.</p>
+                <div class="formula-box">
+Сложность взлома: O(n) — 25 вариантов для EN, 32 для RU.
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: VIGENERE -->
+        <div id="vigenere" class="tab-content">
+            <div class="card">
+                <h1>Шифр Виженера (Vigenère Cipher)</h1>
+                <p>Полиалфавитный шифр замены. Использует ключевое слово для динамического сдвига символов.</p>
+
+                <h2>Математическая модель</h2>
+                <div class="formula-box">
+C_i = (P_i + K_(i mod m)) mod n
+P_i = (C_i - K_(i mod m) + n) mod n
+
+Где:
+• P_i — символ открытого текста
+• K_j — символ ключа
+• m — длина ключа
+                </div>
+
+                <h2>Криптоанализ</h2>
+                <p>Взламывается определением длины ключа (метод Касиски, индекс совпадений) и последующим частотным анализом столбцов.</p>
+            </div>
+        </div>
+
+        <!-- TAB 4: ENIGMA -->
+        <div id="enigma" class="tab-content">
+            <div class="card">
+                <h1>Шифровальная машина «Энигма»</h1>
+                <p>Электромеханическая роторная система периода Второй мировой войны.</p>
+
+                <h2>Компоненты устройства</h2>
+                <ul>
+                    <li><strong>Коммутационная панель:</strong> перестановка пар букв.</li>
+                    <li><strong>Роторы:</strong> динамическая смена схемы замены при каждом нажатии.</li>
+                    <li><strong>Рефлектор:</strong> отправка сигнала обратно через роторы. Исключает шифрование символа в самого себя.</li>
+                </ul>
+
+                <h2>Криптоанализ</h2>
+                <p>Атака строилась на уязвимости рефлектора и применении специализированных вычислительных машин Turing Bombe.</p>
+            </div>
+        </div>
+
+        <!-- TAB 5: AES -->
+        <div id="aes" class="tab-content">
+            <div class="card">
+                <h1>AES (Advanced Encryption Standard)</h1>
+                <p>Современный симметричный блочный шифр (размер блока — 128 бит).</p>
+
+                <h2>Операции раунда</h2>
+                <ol>
+                    <li><strong>SubBytes:</strong> нелинейная замена байтов (S-Box).</li>
+                    <li><strong>ShiftRows:</strong> циклический сдвиг строк.</li>
+                    <li><strong>MixColumns:</strong> перемешивание столбцов над GF(2^8).</li>
+                    <li><strong>AddRoundKey:</strong> XOR с раундовым ключом.</li>
+                </ol>
+
+                <div class="formula-box">
+Стойкость AES-256: 2^256 вариантов ключа.
+Полный перебор невозможен на существующем оборудовании.
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: COMPARE -->
+        <div id="compare" class="tab-content">
+            <div class="card">
+                <h1>Сравнение алгоритмов</h1>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Алгоритм</th>
+                                <th>Тип</th>
+                                <th>Размер ключа</th>
+                                <th>Стойкость</th>
+                                <th>Главная уязвимость</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Цезарь</strong></td>
+                                <td>Моноалфавитный</td>
+                                <td>1–32</td>
+                                <td>Очень низкая</td>
+                                <td>Частотный анализ, Brute-Force</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Виженер</strong></td>
+                                <td>Полиалфавитный</td>
+                                <td>Переменный</td>
+                                <td>Низкая</td>
+                                <td>Метод Касиски</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Энигма</strong></td>
+                                <td>Роторный</td>
+                                <td>~77–88 бит</td>
+                                <td>Средняя</td>
+                                <td>Ограничение рефлектора, человеческий фактор</td>
+                            </tr>
+                            <tr>
+                                <td><strong>AES-256</strong></td>
+                                <td>Блочный (SPN)</td>
+                                <td>256 бит</td>
+                                <td>Высокая</td>
+                                <td>Атаки по побочным каналам</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2>Современные альтернативы</h2>
+                <ul>
+                    <li><strong>ChaCha20:</strong> высокоскоростной потоковый шифр.</li>
+                    <li><strong>RSA / ECC:</strong> асимметричные алгоритмы подписи и обмена ключами.</li>
+                    <li><strong>Кузнечик (ГОСТ Р 34.12-2015):</strong> блочный шифр (128 бит).</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- TAB 7: LAB -->
+        <div id="lab" class="tab-content">
+            <div class="card">
+                <h1>Лаборатория</h1>
+                <p>Тестирование алгоритмов в реальном времени.</p>
+                
+                <div class="lab-grid">
+                    <div>
+                        <div class="form-group">
+                            <label for="lab-algo">Алгоритм:</label>
+                            <select id="lab-algo">
+                                <option value="caesar">Шифр Цезаря</option>
+                                <option value="vigenere">Шифр Виженера</option>
+                                <option value="enigma">Энигма (3 ротора)</option>
+                                <option value="aes">AES-256</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lab-mode">Режим:</label>
+                            <select id="lab-mode">
+                                <option value="encrypt">Зашифровать</option>
+                                <option value="decrypt">Расшифровать</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lab-key">Ключ / Сдвиг / Роторы:</label>
+                            <input type="text" id="lab-key" value="3" placeholder="Введите ключ">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lab-input">Текст:</label>
+                            <textarea id="lab-input" rows="4" placeholder="Введите текст...">HELLOCRYPTO</textarea>
+                        </div>
+
+                        <button type="button" class="btn-action" id="run-lab-btn" onclick="runLab()">Выполнить</button>
+                    </div>
+
+                    <div>
+                        <div class="form-group">
+                            <label>Результат:</label>
+                            <div id="lab-output" class="formula-box" style="min-height: 220px; word-break: break-all; margin-top:0;">
+                                Результат появится здесь...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>© CRYPTO.EDU — Учебно-исследовательский проект по криптографии.</p>
+    </footer>
+
+    <script>
+        window.openTab = function(tabId, evt) {
+            const targetTab = document.getElementById(tabId);
+            if (!targetTab) return;
+
+            const allTabs = document.querySelectorAll('.tab-content');
+            allTabs.forEach(el => el.classList.remove('active'));
+
+            const allBtns = document.querySelectorAll('.tab-btn');
+            allBtns.forEach(el => el.classList.remove('active'));
+
+            targetTab.classList.add('active');
+
+            if (evt) {
+                const clickedBtn = evt.currentTarget || evt.target;
+                if (clickedBtn && clickedBtn.classList) {
+                    clickedBtn.classList.add('active');
+                }
+            } else {
+                const matchingBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+                if (matchingBtn) matchingBtn.classList.add('active');
+            }
+        };
+
+        function caesarCipher(text, shift) {
+            const alphaUpperEn = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const alphaLowerEn = 'abcdefghijklmnopqrstuvwxyz';
+            const alphaUpperRu = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ';
+            const alphaLowerRu = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя';
+
+            return text.split('').map(c => {
+                if (alphaUpperEn.includes(c)) {
+                    let idx = alphaUpperEn.indexOf(c);
+                    return alphaUpperEn[(idx + shift % 26 + 26) % 26];
+                } else if (alphaLowerEn.includes(c)) {
+                    let idx = alphaLowerEn.indexOf(c);
+                    return alphaLowerEn[(idx + shift % 26 + 26) % 26];
+                } else if (alphaUpperRu.includes(c)) {
+                    let idx = alphaUpperRu.indexOf(c);
+                    return alphaUpperRu[(idx + shift % 33 + 33) % 33];
+                } else if (alphaLowerRu.includes(c)) {
+                    let idx = alphaLowerRu.indexOf(c);
+                    return alphaLowerRu[(idx + shift % 33 + 33) % 33];
+                }
+                return c;
+            }).join('');
+        }
+
+        function vigenereCipher(text, key, encrypt = true) {
+            if (!key) return text;
+            text = text.toUpperCase();
+            key = key.toUpperCase().replace(/[^A-Z]/g, '');
+            if (!key) return text;
+
+            let result = '';
+            let ki = 0;
+            const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+            for (let i = 0; i < text.length; i++) {
+                const c = text[i];
+                const idx = alpha.indexOf(c);
+                if (idx !== -1) {
+                    const kShift = alpha.indexOf(key[ki % key.length]);
+                    const shift = encrypt ? kShift : (26 - kShift);
+                    result += alpha[(idx + shift) % 26];
+                    ki++;
+                } else {
+                    result += c;
+                }
+            }
+            return result;
+        }
+
+        class EnigmaSimple {
+            constructor(positions) {
+                this.alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                this.r1 = 'EKMFLGDQVZNTOWYHXUSPAIBRCJ';
+                this.r2 = 'AJDKSIRUXBLHWTMCQGZNPYFVOE';
+                this.r3 = 'BDFHJLCPRTXVZNYEIWGAKMUSQO';
+                this.reflector = 'YRUHQSLDPXNGOKMIEBFZCWVJAT';
+
+                const pos = (positions || 'AAA').toUpperCase();
+                this.p1 = this.alphabet.indexOf(pos[0]) >= 0 ? this.alphabet.indexOf(pos[0]) : 0;
+                this.p2 = this.alphabet.indexOf(pos[1]) >= 0 ? this.alphabet.indexOf(pos[1]) : 0;
+                this.p3 = this.alphabet.indexOf(pos[2]) >= 0 ? this.alphabet.indexOf(pos[2]) : 0;
+            }
+
+            step() {
+                this.p1 = (this.p1 + 1) % 26;
+                if (this.p1 === 0) {
+                    this.p2 = (this.p2 + 1) % 26;
+                    if (this.p2 === 0) {
+                        this.p3 = (this.p3 + 1) % 26;
+                    }
+                }
+            }
+
+            mapChar(c, rotor, pos, forward = true) {
+                const idx = this.alphabet.indexOf(c);
+                if (idx === -1) return c;
+
+                if (forward) {
+                    const shiftIdx = (idx + pos) % 26;
+                    const charOut = rotor[shiftIdx];
+                    const origIdx = (this.alphabet.indexOf(charOut) - pos + 26) % 26;
+                    return this.alphabet[origIdx];
+                } else {
+                    const shiftIdx = (idx + pos) % 26;
+                    const charIn = this.alphabet[shiftIdx];
+                    const rIdx = rotor.indexOf(charIn);
+                    const origIdx = (rIdx - pos + 26) % 26;
+                    return this.alphabet[origIdx];
+                }
+            }
+
+            process(text) {
+                text = text.toUpperCase();
+                let res = '';
+                for (let char of text) {
+                    if (this.alphabet.includes(char)) {
+                        this.step();
+                        let c = char;
+                        c = this.mapChar(c, this.r1, this.p1, true);
+                        c = this.mapChar(c, this.r2, this.p2, true);
+                        c = this.mapChar(c, this.r3, this.p3, true);
+
+                        const rIdx = this.alphabet.indexOf(c);
+                        c = this.reflector[rIdx];
+
+                        c = this.mapChar(c, this.r3, this.p3, false);
+                        c = this.mapChar(c, this.r2, this.p2, false);
+                        c = this.mapChar(c, this.r1, this.p1, false);
+
+                        res += c;
+                    } else {
+                        res += char;
+                    }
+                }
+                return res;
+            }
+        }
+
+        window.runLab = function() {
+            const algo = document.getElementById('lab-algo').value;
+            const mode = document.getElementById('lab-mode').value;
+            const input = document.getElementById('lab-input').value;
+            const key = document.getElementById('lab-key').value;
+            const resultBox = document.getElementById('lab-output');
+
+            if (!input) {
+                resultBox.innerText = 'Введите текст.';
+                return;
+            }
+
+            let output = '';
+
+            try {
+                if (algo === 'caesar') {
+                    const shift = parseInt(key) || 0;
+                    output = caesarCipher(input, mode === 'encrypt' ? shift : -shift);
+                } else if (algo === 'vigenere') {
+                    output = vigenereCipher(input, key, mode === 'encrypt');
+                } else if (algo === 'enigma') {
+                    const e = new EnigmaSimple(key || 'AAA');
+                    output = e.process(input);
+                } else if (algo === 'aes') {
+                    if (typeof CryptoJS === 'undefined') {
+                        output = 'Ошибка: Библиотека CryptoJS не доступна.';
+                    } else if (mode === 'encrypt') {
+                        output = CryptoJS.AES.encrypt(input, key || 'secret').toString();
+                    } else {
+                        const bytes = CryptoJS.AES.decrypt(input, key || 'secret');
+                        output = bytes.toString(CryptoJS.enc.Utf8);
+                        if (!output) output = 'Ошибка: неверный ключ или данные.';
+                    }
+                }
+                resultBox.innerText = output;
+            } catch (err) {
+                resultBox.innerText = 'Ошибка: ' + err.message;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tabId = btn.getAttribute('data-tab');
+                    if (tabId) window.openTab(tabId, e);
+                });
+            });
+
+            const canvas = document.getElementById('bg-canvas');
+            if (canvas && canvas.getContext) {
+                const ctx = canvas.getContext('2d');
+                
+                function resizeCanvas() {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+
+                const chars = '0123456789ABCDEF';
+                const fontSize = 14;
+                let columns = Math.floor(canvas.width / fontSize);
+                let drops = new Array(columns).fill(1);
+
+                function drawMatrix() {
+                    ctx.fillStyle = 'rgba(6, 18, 9, 0.08)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    ctx.fillStyle = '#00ff66';
+                    ctx.font = fontSize + 'px monospace';
+
+                    for (let i = 0; i < drops.length; i++) {
+                        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                            drops[i] = 0;
+                        }
+                        drops[i]++;
+                    }
+                }
+                setInterval(drawMatrix, 33);
+            }
+        });
+    </script>
+</body>
+</html>
